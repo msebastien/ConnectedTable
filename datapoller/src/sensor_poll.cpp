@@ -37,7 +37,7 @@ void poll_sensor(void* poll_ptr, string id, double sensibility, double offset){
 	string query = "sensors::" + id;
 
 	// Flush serial port
-	usleep(160000);
+	usleep(140000);
 	tcflush(sensors.getFileDescriptor(), TCIFLUSH);
 	
 	// Query
@@ -58,13 +58,16 @@ void poll_sensor(void* poll_ptr, string id, double sensibility, double offset){
 	}
 	else{ // 2nd try
 		static time_t last_poll2 = now_millisec();
+
+		usleep(20000);
+		tcflush(sensors.getFileDescriptor(), TCIFLUSH);
 		// Query
 		result = sensors.query(query.c_str());
 
 		while(!result.get_data(&data))
 		{
 			time_t now2 = now_millisec();
-			if(now2 - last_poll2 > 50) break; // 30 ms
+			if(now2 - last_poll2 > 50) break; // 50 ms
 		}
 		
 		if(result.get_data(&data))
@@ -77,13 +80,16 @@ void poll_sensor(void* poll_ptr, string id, double sensibility, double offset){
 		else // 3rd try
 		{
 			static time_t last_poll3 = now_millisec();
+
+			usleep(20000);
+			tcflush(sensors.getFileDescriptor(), TCIFLUSH);
 			// Query
 			result = sensors.query(query.c_str());
 
 			while(!result.get_data(&data))
 			{
 				time_t now3 = now_millisec();
-				if(now3 - last_poll3 > 50) break; // 30 ms
+				if(now3 - last_poll3 > 50) break; // 50 ms
 			}
 
 			if(result.get_data(&data))
