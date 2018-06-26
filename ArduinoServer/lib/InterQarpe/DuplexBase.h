@@ -5,11 +5,9 @@
 #include <stddef.h>
 #include "QueryResult.h"
 
-namespace InterQarpe
-{
+namespace InterQarpe {
 
-class DuplexBase
-{
+class DuplexBase {
 #ifndef __DOXYGEN__
 	// All packet types and their values in the "packet type" field
 	static const uint8_t PAQ_HEARTBEAT = 0x0;
@@ -26,12 +24,12 @@ class DuplexBase
 	static const uint8_t MASK_RESPONSE = 0x20;
 
 	// Default max duration in milliseconds before we consider we've timeout
-	static const uint32_t TIMEOUT_DATA = 4000;				// 4000
-	static const uint32_t TIMEOUT_QUERY_RECEIVED = 5000;	// 3000
+	static const uint32_t TIMEOUT_DATA = 4000; // 4000
+	static const uint32_t TIMEOUT_QUERY_RECEIVED = 5000; // 3000
 	static const uint32_t TIMEOUT_RESPONSE_RECEIVED = 5000; // 3000
-	static const uint32_t TIMEOUT_QUERY_RESPONSE = 4000;	// 4000
-	static const uint32_t TIMEOUT_CONNECTION_LOST = 8000;   // 8000
-	static const uint32_t TIMEOUT_SEND_HEARTBEAT = 2000;	// 2000
+	static const uint32_t TIMEOUT_QUERY_RESPONSE = 4000; // 4000
+	static const uint32_t TIMEOUT_CONNECTION_LOST = 8000; // 8000
+	static const uint32_t TIMEOUT_SEND_HEARTBEAT = 4000; // 2000
 
 	// Number of try if we don't receive a PAQ_[QUERY|RESPONSE]_RECEIVED
 	static const size_t TRY_SEND_QUERY = 3;
@@ -53,8 +51,7 @@ class DuplexBase
 	/**
 	 * Represent a packet we've received.
 	 **/
-	typedef struct
-	{
+	typedef struct {
 		bool available;
 		uint8_t type;
 		size_t data_size;
@@ -91,7 +88,7 @@ class DuplexBase
 	 *
 	 * @return true if it was succesfully sent
 	 **/
-	bool write_packet(uint8_t type, uint8_t *data, size_t data_length);
+	bool write_packet(uint8_t type, uint8_t* data, size_t data_length);
 
 	/**
 	 * Recover next packet on the serial line
@@ -138,7 +135,7 @@ class DuplexBase
 	 *
 	 * @return xor checkcode of the data in buffer
 	 **/
-	uint8_t compute_checkcode(uint8_t *buffer, size_t buffer_size);
+	uint8_t compute_checkcode(uint8_t* buffer, size_t buffer_size);
 
 	/**
 	 * Check if we have timeout
@@ -175,13 +172,13 @@ class DuplexBase
 	 *
 	 * @return true if we succesfully initiated a query
 	 **/
-	bool initiate_query(const char *query);
+	bool initiate_query(const char* query);
 
 	/**
 	 * Internal function to send a query
 	 * (cf query() for more documentation)
 	 **/
-	bool _query(const char *query);
+	bool _query(const char* query);
 
 	/**
 	 * Handle any query coming from the other device
@@ -205,7 +202,7 @@ class DuplexBase
 	 * @return number of bytes written succesfully or -1 if we failed to write
 	 * altogether and exception are disabled
 	 **/
-	virtual int write_bytes(uint8_t *buf, size_t count) = 0;
+	virtual int write_bytes(uint8_t* buf, size_t count) = 0;
 
 	/**
 	 * Read "count" bytes from the serial port. If less bytes are available
@@ -219,7 +216,7 @@ class DuplexBase
 	 * (can be less than "count") or -1 if an error occur and exception are
 	 * disabled.
 	 **/
-	virtual int read_bytes(uint8_t *buf, size_t count) = 0;
+	virtual int read_bytes(uint8_t* buf, size_t count) = 0;
 
 	/**
 	 * Return the number of bytes available on the serial port
@@ -237,7 +234,7 @@ class DuplexBase
 	 **/
 	virtual uint32_t now_ms(void) = 0;
 
-  protected:
+protected:
 	/**
 	 * send a "ok" response without any data
 	 */
@@ -253,7 +250,7 @@ class DuplexBase
 	 *
 	 * @tparam T type of data to send
 	 **/
-	template <typename T>
+	template<typename T>
 	void send_response_ok(T data);
 
 	/**
@@ -261,7 +258,7 @@ class DuplexBase
 	 *
 	 * @tparam T type of data to send
 	 **/
-	template <typename T>
+	template<typename T>
 	void send_response_error(T data);
 
 	/**
@@ -272,9 +269,9 @@ class DuplexBase
 	/**
 	 * Hook that is called when a query is received
 	 **/
-	virtual void on_query(const char *query);
+	virtual void on_query(const char* query);
 
-  public:
+public:
 	DuplexBase();
 
 	/**
@@ -302,10 +299,10 @@ class DuplexBase
 	 *
 	 * @return the query's result
 	 **/
-	QueryResult query(const char *query);
+	QueryResult query(const char* query);
 };
 
-} // namespace InterQarpe
+}
 
 #include "DuplexBase.tpp"
 

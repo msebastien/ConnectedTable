@@ -3,11 +3,9 @@
 
 #include <Arduino.h>
 
-class Mux8
-{
+class Mux8 {
 	int pin_select[3];
-
-  public:
+public:
 	/*typedef enum {
 		S1 = 0,
 		S2 = 1,

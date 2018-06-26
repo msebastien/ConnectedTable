@@ -1,7 +1,6 @@
 #include "Multiplexer.h"
 
-Mux8::Mux8(int pin_0, int pin_1, int pin_2)
-{
+Mux8::Mux8(int pin_0, int pin_1, int pin_2){
 	pin_select[0] = pin_0;
 	pin_select[1] = pin_1;
 	pin_select[2] = pin_2;
@@ -11,32 +10,26 @@ Mux8::Mux8(int pin_0, int pin_1, int pin_2)
 	digitalWrite(pin_2, LOW);
 }
 
-void Mux8::select_output(const int output_id)
-{
-	if (output_id % 2 == 1)
+void Mux8::select_output(const int output_id){
+	if ( output_id % 2 == 1)
 	{
 		digitalWrite(pin_select[0], HIGH); //LSB
 	}
-	else
-	{
+	else {
 		digitalWrite(pin_select[0], LOW);
 	}
 
-	if (output_id % 4 >= 2)
-	{
+  if (output_id % 4 >= 2) {
 		digitalWrite(pin_select[1], HIGH);
 	}
-	else
-	{
+	else{
 		digitalWrite(pin_select[1], LOW);
 	}
 
-	if (output_id >= 4)
-	{
+  if (output_id >= 4) {
 		digitalWrite(pin_select[2], HIGH); //MSB
-	}
-	else
-	{
+	}else {
 		digitalWrite(pin_select[2], LOW);
 	}
+	
 }
