@@ -16,5 +16,4 @@ void color(unsigned int data_IR);
 void get_table_status(unsigned int data_IR);
 void sensors_routine();
 
-
 #endif
