@@ -17,7 +17,7 @@ extern bool requestReceived;
 unsigned int distance[6] = {0, 0, 0, 0, 0, 0};
 
 // IR SENSOR
-// Paramètre de calibration des capteurs IR
+// Paramétre de calibration des capteurs IR
 float calibration2_IR[6] = {1.26, 1.34, 1.34, 1.36, 1.36, 1.34};
 
 extern char tableStatus[6];
@@ -25,6 +25,8 @@ extern char tableStatus[6];
 // Data
 char tableData[9];
 char tableData_save[9];
+int rawTemperatureIR[6]; // Millivolts
+int rawDistance[6]; // Millivolts
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 //                                                                           TEMPERATURE AMBIANTE/HUMIDITE
@@ -37,26 +39,25 @@ char tableData_save[9];
 */
 int capteur_temp()
 {
-  mux_com.select_output(0);
+    mux_com.select_output(0);
 
-  float t = dht.readTemperature();
-  int temperature = t;
-  if (t - temperature >= 0.5)
-    temperature++; //arrondi
+    float t = dht.readTemperature();
+    int temperature = t;
+    if ( t - temperature >= 0.5) temperature++; //arrondi
 
-  return temperature;
+    return temperature;
 }
+
 
 unsigned int capteur_hum()
 {
-  mux_com.select_output(0);
+    mux_com.select_output(0);
 
-  float h = dht.readHumidity();
-  unsigned int humidity = h;
-  if (h - humidity >= 0.5)
-    humidity++; //arrondi
+    float h = dht.readHumidity();
+    unsigned int humidity = h;
+    if (h - humidity >= 0.5) humidity++; //arrondi
 
-  return humidity;
+    return humidity;
 }
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -76,35 +77,30 @@ unsigned int capteur_hum()
 */
 unsigned int capteur_IR()
 {
-  unsigned int Temp_objet = 0;
-  int nbr = 1;
-  int Capteur_IR = 0;
-  int i = 0;
-  unsigned int t = capteur_temp();
+    unsigned int Temp_objet = 0;
+    int nbr = 1;
+    int Capteur_IR = 0;
+    int i = 0;
+    unsigned int t = capteur_temp();
 
-  while ((Qarpediem::NB_PLACES + 1) != nbr)
-  {
-    mux_com.select_output(nbr); //dirige l'entrée vers le capteur nbr
+    while (nbr < (Qarpediem::NB_PLACES + 1)) {
+      mux_com.select_output(nbr); //dirige l'entrée vers le capteur nbr
 
-    for (i = 0; i < 10; i++)
-      Capteur_IR += analogRead(Qarpediem::C_IR_PIN); // Lis la valeur renvoyée par le capteur
-    Capteur_IR /= 10;
-    if (!isnan(Capteur_IR) || Capteur_IR > 0) // If it's a finite number
-    {
-      if (Capteur_IR >= 213 * (0.014 * t + calibration2_IR[nbr - 1]) && count_IR[nbr - 1] < 3)
-        count_IR[nbr - 1]++;
+      for (i = 0; i < 10; i++) Capteur_IR += analogRead(Qarpediem::C_IR_PIN); // Lis la valeur renvoyée par le capteur
+      Capteur_IR /= 10;
+      if(!isnan(Capteur_IR) || Capteur_IR > 0) // If it's a finite number
+      {
+          if (Capteur_IR >= 213 * (0.014 * t + calibration2_IR[nbr - 1]) && count_IR[nbr - 1] < 3 ) count_IR[nbr - 1]++;
 
-      else if (count_IR[nbr - 1] > -3)
-        count_IR[nbr - 1]--;
+          else if (count_IR[nbr - 1] > -3) count_IR[nbr - 1]--;
 
-      if (count_IR[nbr - 1] >= 0)
-        Temp_objet += (pow(2, nbr - 1) + 0.5);
+          if (count_IR[nbr - 1] >= 0)Temp_objet += (pow(2, nbr - 1) + 0.5);
+      }
+
+      nbr++;
     }
 
-    nbr++;
-  }
-
-  return Temp_objet;
+    return Temp_objet;
 }
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -127,34 +123,77 @@ void capteur_distance()
   short int nbr = 1;
   int i = 0, j = 0;
 
-  for (i = 0; i < Qarpediem::NB_PLACES; i++)
-  {
+  for (i = 0; i < Qarpediem::NB_PLACES; i++) {
     distance[i] = 254; //initialisation par default comme non connectÃ©
   }
-  while ((Qarpediem::NB_PLACES + 1) != nbr)
-  {
+  while (nbr < (Qarpediem::NB_PLACES + 1)) {
     total = 0;
 
     mux_com.select_output(nbr); //dirige l'entrée vers le capteur nbr
 
-    for (j = 0; j < 50; j++)
-    {
+    for (j = 0; j < 50; j++) {
       voltage = analogRead(Qarpediem::C_DIST_PIN) * 5.0 / 1023.0; //conversion de la valeur lue en Volt
-      distance_capteur = 25.291 * (pow(voltage, -1.139));         //conversion des Volts vers une distance
-      total += distance_capteur;                                  //somme des 50 distances mesurées
+      distance_capteur = 25.291 * (pow(voltage, -1.139)); //conversion des Volts vers une distance
+      total += distance_capteur; //somme des 50 distances mesurées
     }
     total = total / 50; //moyenne des distances
-    if (total > 150)
-      total = 150;
+    if (total > 150) total = 150;
 
-    if (!isnan(total) || total > 0) // If it's a finite number
+    if(!isnan(total) || total > 0) // If it's a finite number
     {
-      distance[nbr - 1] = total;
+        distance[nbr - 1] = total;
     }
 
     nbr++;
   }
 }
+
+//-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//                                                                        DONNEES BRUTES (DISTANCE / TEMPERATURE IR)
+//-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+void getRawTempIR()
+{
+    int nbr = 1;
+    float voltageTempIR = 0;
+    int i = 0;
+
+    while (nbr < (Qarpediem::NB_PLACES + 1)) {
+      mux_com.select_output(nbr); //dirige l'entrée vers le capteur nbr
+
+      for (i = 0; i < 10; i++) voltageTempIR += analogRead(Qarpediem::C_IR_PIN) * 5000.0 / 1023.0; // Millivolts
+      voltageTempIR /= 10.0;
+
+      rawTemperatureIR[nbr - 1] = (int)voltageTempIR;
+
+      nbr++;
+    }
+
+}
+
+void getRawDistance()
+{
+  float voltage = 0, total = 0;
+  short int nbr = 1;
+  int i;
+
+  while (nbr < (Qarpediem::NB_PLACES + 1)) {
+    total = 0;
+
+    mux_com.select_output(nbr); //dirige l'entrée vers le capteur nbr
+
+    for (i = 0; i < 50; i++) {
+      voltage = analogRead(Qarpediem::C_DIST_PIN) * 5000.0 / 1023.0; //conversion de la valeur lue en Millivolt
+      total += voltage; //somme des 50 distances mesurées
+    }
+    total /= 50.0; //moyenne des tensions
+
+    rawDistance[nbr - 1] = (int)total;
+
+    nbr++;
+  }
+
+}
+
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 //                                                                         CAPTEUR DE MOUVEMENT
@@ -165,18 +204,16 @@ void capteur_distance()
 */
 void capteur_mouvement()
 {
-  mouvement = digitalRead(Qarpediem::C_MOUVEMENT_PIN);
+    mouvement = digitalRead(Qarpediem::C_MOUVEMENT_PIN);
 }
 
 //capteur de son (desactive)
-unsigned int capteur_son()
-{
+unsigned int capteur_son() {
   /*if (Capteurs[4]) {
     //a completer
     return 1;
   }
-  else*/
-  return 254;
+  else*/ return 254;
 }
 
 /*
@@ -184,16 +221,12 @@ unsigned int capteur_son()
 
   Permet de constituer la data contenant l'information sur la vibration, et le mouvement ( les deux bit de poids faible sont le mouvement, , les 2 suivantet la vibration, les 4 bits supérieur sont disponible en cas de besoin d'ajoute de capteurs
 */
-unsigned int data_mvt()
-{
+unsigned int data_mvt() {
   unsigned int data = 0;
 
-  if (mouvement == 255)
-    data += 1;
-  else if (mouvement == 0)
-    data += 2;
-  else
-    data += 3;
+  if (mouvement == 255) data += 1;
+  else if (mouvement == 0)data += 2;
+  else data += 3;
 
   /*if (Vibe == 255) data += 4;
   else if (Vibe == 0)data += 8;
@@ -202,18 +235,16 @@ unsigned int data_mvt()
   return data;
 }
 
-void createDataTable(unsigned int obj_chaud, unsigned int data_mvmt, unsigned int bruit)
-{
+void createDataTable(unsigned int obj_chaud, unsigned int data_mvmt, unsigned int bruit) {
   //initialisation des valeur reÃ§u au format char (modifiable au besoin)
-  int i = 0;
+  int i;
   char chaud = obj_chaud + 1, br = bruit + 1, data_movement = data_mvmt + 1;
   char dist[6] = {distance[0] + 1, distance[1] + 1, distance[2] + 1, distance[3] + 1, distance[4] + 1, distance[5] + 1};
 
   //CrÃ©ation trame secondaire pour faciliter le remplissage(Ã  Traver une boucle) de la Trame mit en variable globale
   char Trame2[9] = {dist[0], dist[1], dist[2], dist[3], dist[4], dist[5], chaud, data_movement, br};
 
-  for (i = 0; i < 9; i++)
-    tableData[i] = Trame2[i];
+  for (i = 0; i < 9; i++) tableData[i] = Trame2[i];
 
 } // Fin de createDataTable()
 
@@ -229,49 +260,42 @@ void createDataTable(unsigned int obj_chaud, unsigned int data_mvmt, unsigned in
     Si data_save[0] = 0, c'est que nous somme a l'intialisation, donc qu'il faut envoyer une premiÃ¨re data.
 
 */
-boolean event()
-{
+boolean event() {
 
-  if (tableData_save[0] == 0)
-  { //premiÃ¨re trame
+  if (tableData_save[0] == 0) { //premiÃ¨re trame
     strcpy(tableData_save, tableData);
     return 1;
   }
 
   // DISTANCE
   int i;
-  for (i = 0; i < 5; i++)
-  {
+  for (i = 0; i < 5; i++) {
 
-    if ((tableData_save[i] >= 80) && (tableData_save[i] != 254))
-    { //distance (n-1) superieur Ã  80 cm et capteur connectÃ©
-      if ((tableData[i] <= 80) && (tableData[i] <= tableData_save[i] - 15))
-      { //distance (n) inferieur Ã  80 cm et variation notable (15 cm)
+    if ((tableData_save[i] >= 80) && (tableData_save[i] != 254)) { //distance (n-1) superieur Ã  80 cm et capteur connectÃ©
+      if ((tableData[i] <= 80) && (tableData[i] <= tableData_save[i] - 15)) { //distance (n) inferieur Ã  80 cm et variation notable (15 cm)
         strcpy(tableData_save, tableData);
         return 1;
       }
+
     }
-    else if ((tableData[i] <= (tableData_save[i] - 15)) || (tableData[i] >= (tableData_save[i] + 15)))
-    { //variation notable (+ ou - 15 cm)
+    else if ((tableData[i] <= (tableData_save[i] - 15)) || (tableData[i] >= (tableData_save[i] + 15))) { //variation notable (+ ou - 15 cm)
       strcpy(tableData_save, tableData);
       return 1;
     }
+
   }
 
   // IR & MOUVEMENT
-  if (tableData[6] != tableData_save[6])
-  { //octet correspondant au capteur IR
+  if (tableData[6] != tableData_save[6]) { //octet correspondant au capteur IR
     strcpy(tableData_save, tableData);
 
     return 1;
   }
-  else if (tableData[7] % 2 != tableData_save[7] % 2)
-  { //changement d'etat de la detection de mouvement
+  else if (tableData[7] % 2 != tableData_save[7] % 2) { //changement d'etat de la detection de mouvement
     strcpy(tableData_save, tableData);
     return 1;
   }
-  else
-    return 0;
+  else return 0;
 }
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -286,35 +310,27 @@ boolean event()
    cette décide de quel couleur doit prendre la diode en fonction des distance et de la chaleur donnée par les capteurs , et lui applique directement
    la fonction doit être placer après avoir vérifier la fonction event()
 */
-void color(unsigned int data_IR)
-{
+void color(unsigned int data_IR) {
   int bit_IR = 0;
-  for (int i = 0; i < Qarpediem::NB_PLACES; i++)
-  {
+  for (int i = 0; i < Qarpediem::NB_PLACES; i++) {
     bit_IR = pow(2, i) + 0.5;
 
-    if (distance[i] > 70)
-      status_led.setColorRGB(i, 0, 0, 255); //Blue
-    else if (data_IR & bit_IR)
-      status_led.setColorRGB(i, 255, 0, 0); // Red
-    else
-      status_led.setColorRGB(i, 50, 255, 0); // Green
+
+    if (distance[i] > 70) status_led.setColorRGB(i, 0, 0, 255); //Blue
+    else if (data_IR & bit_IR) status_led.setColorRGB(i, 255, 0, 0); // Red
+    else status_led.setColorRGB(i, 50, 255, 0); // Green
   }
 } // Fin de color()
 
-void get_table_status(unsigned int data_IR)
-{
+void get_table_status(unsigned int data_IR) {
   int bit_IR = 0;
-  for (int i = 0; i < Qarpediem::NB_PLACES; i++)
-  {
+  for (int i = 0; i < Qarpediem::NB_PLACES; i++) {
     bit_IR = pow(2, i) + 0.5;
 
-    if (distance[i] > 70)
-      tableStatus[i] = '0'; // No chair
-    else if (data_IR & bit_IR)
-      tableStatus[i] = '2'; // Presence of a person
-    else
-      tableStatus[i] = '1'; // Chair available
+
+    if (distance[i] > 70) tableStatus[i] = '0'; // No chair
+    else if (data_IR & bit_IR) tableStatus[i] = '2'; // Presence of a person
+    else tableStatus[i] = '1'; // Chair available
   }
 } // Fin de status()
 
@@ -325,29 +341,34 @@ void get_table_status(unsigned int data_IR)
    Correspond à la routine du programme, la fonction est éxécuter en boucle .
    Elle consiste à lire les valeurs des capteurs, vérifier les message reçu, vérifier si il faut envoyer la nouvelle Trame, et si oui, la transmettre.
 */
-void sensors_routine()
-{
-  Serial.println(F("==Sensors routine=="));
+void sensors_routine() {
+    Serial.println(F("==Sensors routine=="));
 
-  //Initialisation des valeurs de chaque capteurs
-  capteur_distance();
-  //int temperature = capteur_temp();
-  unsigned int obj_chaud = capteur_IR();
-  unsigned int bruit = capteur_son();
-  unsigned int data_mvmt = data_mvt();
+        //Initialisation des valeurs de chaque capteurs
+        capteur_distance();
+        unsigned int obj_chaud = capteur_IR();
+        unsigned int bruit = capteur_son();
+        unsigned int data_mvmt = data_mvt();
+        getRawDistance();
+        getRawTempIR();
 
-  //Création de la trame en fonction des nouvelles valeur des capteurs
-  createDataTable(obj_chaud, data_mvmt, bruit);
+        //Création de la trame en fonction des nouvelles valeur des capteurs
+        createDataTable(obj_chaud, data_mvmt, bruit);
 
-  // Verification d'un éventuelle changement important par rapport à la trame précédente
-  bool getEvent = event();
+        // Verification d'un éventuelle changement important par rapport à la trame précédente
+        bool getEvent = event();
 
-  // Si un évènement survient
-  if (getEvent)
-  {
-    Serial.println(F("Got an event"));
-    color(obj_chaud);
-    get_table_status(obj_chaud);
-  }
+        // Si un évènement survient
+        if (getEvent) {
+          Serial.println(F("Got an event"));
+          color(obj_chaud);
+          get_table_status(obj_chaud);
+        }
+
+        Serial.println();
+        for(int i =0; i < 9; i++){
+            Serial.print(tableData[i]);
+        }
+        Serial.println();
 
 } // Fin de routine()

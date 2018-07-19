@@ -14,11 +14,10 @@ using namespace Qarpediem;
 //SoftwareSerial softSerial(Qarpediem::RX_PIN, Qarpediem::TX_PIN);
 SensorServer sensors_server(Qarpediem::SERIAL_COM);
 
-void setup()
-{
+void setup(){
 	Serial.begin(9600);
 	Serial.println();
-	Serial.println(F("---------------------------------------------"));
+	Serial.println(F("--------------------------------------------"));
 	Serial.println(F("| QARPEDIEM - Connected Table Sensor Board |"));
 	Serial.println(F("--------------------------------------------"));
 	Serial.flush();
@@ -28,7 +27,6 @@ void setup()
 	Serial.println(F("Starting interqarpe interface..."));
 }
 
-void loop()
-{
+void loop(){
 	sensors_server.routine();
 }
