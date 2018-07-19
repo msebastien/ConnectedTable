@@ -45,7 +45,7 @@ static const char* sql_init =
 	"('tempIR3', 'Raw Infrared Temperature 3rd place', 'mV'),"
 	"('tempIR4', 'Raw Infrared Temperature 4th place', 'mV'),"
 	"('tempIR5', 'Raw Infrared Temperature 5th place', 'mV'),"
-	"('tempIR6', 'Raw Infrared Temperature 6th place', 'mV'),"
+	"('tempIR6', 'Raw Infrared Temperature 6th place', 'mV')"
 ";"
 
 "CREATE TABLE IF NOT EXISTS sensors.data ("
