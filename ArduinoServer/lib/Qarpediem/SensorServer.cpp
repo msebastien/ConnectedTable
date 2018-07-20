@@ -2,7 +2,6 @@
 #include <DHT.h>
 #include <Multiplexer.h>
 #include <ChainableLED.h>
-#include <Digital_Light_TSL2561.h>
 #include <SensorAverage.h>
 #include <DuplexBase.h>
 #include <stdlib.h>
