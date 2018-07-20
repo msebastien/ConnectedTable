@@ -1,7 +1,6 @@
 #include <Arduino.h>
 #include <ChainableLED.h>
 #include <DHT.h>
-#include <Digital_Light_TSL2561.h>
 #include <DuplexBase.h>
 #include <Multiplexer.h>
 #include <SensorAverage.h>
