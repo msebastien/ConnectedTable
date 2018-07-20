@@ -88,7 +88,7 @@ unsigned int capteur_IR()
 
       for (i = 0; i < 10; i++) Capteur_IR += analogRead(Qarpediem::C_IR_PIN); // Lis la valeur renvoyée par le capteur
       Capteur_IR /= 10;
-      if(!isnan(Capteur_IR) || Capteur_IR > 0) // If it's a finite number
+      if(!isnan(Capteur_IR) || Capteur_IR > 25) // If it's a finite number
       {
           if (Capteur_IR >= 213 * (0.014 * t + calibration2_IR[nbr - 1]) && count_IR[nbr - 1] < 3 ) count_IR[nbr - 1]++;
 
@@ -142,6 +142,8 @@ void capteur_distance()
     if(!isnan(total) || total > 0) // If it's a finite number
     {
         distance[nbr - 1] = total;
+    }else{
+        distance[nbr - 1] = 0;
     }
 
     nbr++;
@@ -315,8 +317,8 @@ void color(unsigned int data_IR) {
   for (int i = 0; i < Qarpediem::NB_PLACES; i++) {
     bit_IR = pow(2, i) + 0.5;
 
-
-    if (distance[i] > 70) status_led.setColorRGB(i, 0, 0, 255); //Blue
+    if(rawDistance[i] == 0) status_led.setColorRGB(i, 128, 128, 128); // Grey
+    else if (distance[i] > 70) status_led.setColorRGB(i, 0, 0, 255); //Blue
     else if (data_IR & bit_IR) status_led.setColorRGB(i, 255, 0, 0); // Red
     else status_led.setColorRGB(i, 50, 255, 0); // Green
   }
@@ -328,7 +330,8 @@ void get_table_status(unsigned int data_IR) {
     bit_IR = pow(2, i) + 0.5;
 
 
-    if (distance[i] > 70) tableStatus[i] = '0'; // No chair
+    if (rawDistance[i] == 0) tableStatus[i] = '3'; // No sensor
+    else if (distance[i] > 70) tableStatus[i] = '0'; // No chair
     else if (data_IR & bit_IR) tableStatus[i] = '2'; // Presence of a person
     else tableStatus[i] = '1'; // Chair available
   }
